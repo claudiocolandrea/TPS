@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Anagrafica 2.0</title>
+    <script>
+        function stampa() {
+            let nome = document.getElementById("nome").value;
+            let cognome = document.getElementById("cognome").value;
+            let indirizzo = document.getElementById("indirizzo").value;
+            let citta = document.getElementById("citta").value;
+
+            let sesso = document.querySelector('input[name="sesso"]:checked');
+            if (sesso) sesso = sesso.value;
+            else sesso = "Non selezionato";
+
+            let diplomi = "";
+            let checkboxes = document.querySelectorAll('input[name="dipl"]:checked');
+            checkboxes.forEach(c => {
+                diplomi += c.value + " ";
+            });
+            if (diplomi === "") diplomi = "Nessuno";
+
+            let provincia = document.getElementById("provincia").value;
+
+            let sport = "";
+            let list = document.getElementById("sport");
+            for (let i = 0; i < list.options.length; i++) {
+                if (list.options[i].selected) {
+                    sport += list.options[i].value + " ";
+                }
+            }
+            if (sport === "") sport = "Nessuno";
+
+            let tabella =
+                "<table border='1'>" +
+                "<tr><th>Nome</th><th>Cognome</th><th>Indirizzo</th><th>Città</th><th>Sesso</th><th>Diplomi</th><th>Provincia</th><th>Sport</th></tr>" +
+                "<tr>" +
+                "<td>" + nome + "</td>" +
+                "<td>" + cognome + "</td>" +
+                "<td>" + indirizzo + "</td>" +
+                "<td>" + citta + "</td>" +
+                "<td>" + sesso + "</td>" +
+                "<td>" + diplomi + "</td>" +
+                "<td>" + provincia + "</td>" +
+                "<td>" + sport + "</td>" +
+                "</tr></table>";
+
+            document.getElementById("risultato").innerHTML = tabella;
+        }
+    </script>
+</head>
+<body>
+
+<h2>Anagrafica 2.0</h2>
+
+Nome: <input type="text" id="nome"><br><br>
+Cognome: <input type="text" id="cognome"><br><br>
+Indirizzo: <input type="text" id="indirizzo"><br><br>
+Città: <input type="text" id="citta"><br><br>
+
+Sesso:<br>
+<input type="radio" name="sesso" value="Maschio"> Maschio<br>
+<input type="radio" name="sesso" value="Femmina"> Femmina<br><br>
+
+Diplomi posseduti:<br>
+<input type="checkbox" name="dipl" value="Media"> Media<br>
+<input type="checkbox" name="dipl" value="Superiore"> Superiore<br>
+<input type="checkbox" name="dipl" value="Laurea"> Laurea<br><br>
+
+Provincia (sigla):<br>
+<select id="provincia">
+    <option>MI</option>
+    <option>RM</option>
+    <option>TO</option>
+    <option>NA</option>
+    <option>FI</option>
+</select><br><br>
+
+Sport praticati:<br>
+<select id="sport" multiple size="4">
+    <option>Calcio</option>
+    <option>Basket</option>
+    <option>Nuoto</option>
+    <option>Palestra</option>
+    <option>Tennis</option>
+</select><br><br>
+
+<button onclick="stampa()">Stampa</button>
+
+<br><br>
+<div id="risultato"></div>
+
+</body>
+</html>
