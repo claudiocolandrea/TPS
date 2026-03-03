@@ -14,7 +14,9 @@ th { background-color: #ddd; }
 </style>
 
 <script>
+
 function aggiungi() {
+
     let nome = document.getElementById("nome").value;
     let cognome = document.getElementById("cognome").value;
     let eta = document.getElementById("eta").value;
@@ -25,7 +27,6 @@ function aggiungi() {
     let email = document.getElementById("email").value;
     let telefono = document.getElementById("telefono").value;
 
-    
     let regexNomeCognome = /^[a-zA-Z]+$/;
     let regexCAP = /^\d{5}$/;
     let regexCitta = /^[a-zA-Z\s]+$/;
@@ -36,22 +37,27 @@ function aggiungi() {
         alert("Il nome può contenere solo lettere.");
         return;
     }
+
     if (!regexNomeCognome.test(cognome)) {
         alert("Il cognome può contenere solo lettere.");
         return;
     }
+
     if (!regexCAP.test(cap)) {
         alert("Il CAP deve essere composto da 5 numeri.");
         return;
     }
+
     if (!regexCitta.test(citta)) {
         alert("La città può contenere solo lettere e spazi.");
         return;
     }
+
     if (!regexEmail.test(email)) {
         alert("L'email non è valida.");
         return;
     }
+
     if (!regexTelefono.test(telefono)) {
         alert("Il numero di telefono deve essere composto da 10 numeri.");
         return;
@@ -69,12 +75,16 @@ function aggiungi() {
         telefono: telefono
     };
 
+
     let elenco = JSON.parse(localStorage.getItem("anagrafica"));
+
     elenco.push(persona);
+
     localStorage.setItem("anagrafica", JSON.stringify(elenco));
 
     aggiornaTabella();
 
+    
     document.getElementById("nome").value = "";
     document.getElementById("cognome").value = "";
     document.getElementById("eta").value = "";
@@ -86,8 +96,10 @@ function aggiungi() {
     document.getElementById("telefono").value = "";
 }
 
+
 function aggiornaTabella() {
-    let elenco = JSON.parse(localStorage.getItem("anagrafica")) ;
+
+    let elenco = JSON.parse(localStorage.getItem("anagrafica")) || [];
 
     let tab = "<table>";
     tab += "<tr><th>Nome</th><th>Cognome</th><th>Età</th><th>Città</th><th>Provincia</th><th>Nazione</th><th>CAP</th><th>Email</th><th>Telefono</th></tr>";
@@ -107,14 +119,26 @@ function aggiornaTabella() {
     }
 
     tab += "</table>";
+
     document.getElementById("risultato").innerHTML = tab;
 }
 
-window.onload = aggiornaTabella;
+
+window.onload = function() {
+
+    // Se non esiste ancora, crea array vuoto
+    if (!localStorage.getItem("anagrafica")) {
+        localStorage.setItem("anagrafica", JSON.stringify([]));
+    }
+
+    aggiornaTabella();
+};
+
 </script>
 </head>
 
 <body>
+
 <h2>Anagrafica Completa</h2>
 
 <input type="text" id="nome" placeholder="Nome"><br>
@@ -130,5 +154,6 @@ window.onload = aggiornaTabella;
 <button onclick="aggiungi()">Aggiungi</button>
 
 <div id="risultato"></div>
+
 </body>
 </html>
