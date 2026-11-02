@@ -1,0 +1,249 @@
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Andamento COVID-19 Italia</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    margin: 25px;
+    background: #f4f6f9;
+    color: #263238;
+}
+h1 { color: #174a75; }
+.controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 20px 0;
+}
+input, button {
+    padding: 10px;
+    border: 1px solid #bbb;
+    border-radius: 5px;
+}
+button {
+    background: #1769aa;
+    color: white;
+    cursor: pointer;
+}
+button:hover { background: #104c80; }
+.table-container {
+    overflow-x: auto;
+    background: white;
+    border-radius: 8px;
+}
+table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 13px;
+    white-space: nowrap;
+}
+th {
+    background: #174a75;
+    color: white;
+    position: sticky;
+    top: 0;
+    cursor: pointer;
+}
+td, th {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: right;
+}
+td:first-child, th:first-child {
+    text-align: left;
+}
+tr:nth-child(even) { background: #edf3f8; }
+tr:hover { background: #d6eafa; }
+#status { margin: 15px 0; }
+</style>
+</head>
+
+<body>
+
+<h1>Andamento COVID-19 in Italia</h1>
+<p>Serie storica nazionale – Fonte: Dipartimento della Protezione Civile</p>
+
+<div class="controls">
+    <input type="date" id="dataInizio">
+    <input type="date" id="dataFine">
+    <input type="text" id="ricerca"
+           placeholder="Cerca nella tabella...">
+    <button onclick="filtra()">Filtra</button>
+    <button onclick="esportaCSV()">Esporta CSV</button>
+    <button onclick="reset()">Reset</button>
+</div>
+
+<div id="status">Caricamento dati in corso...</div>
+
+<div class="table-container">
+<table id="tabella">
+<thead><tr id="intestazione"></tr></thead>
+<tbody id="corpo"></tbody>
+</table>
+</div>
+
+<script>
+const URL_JSON =
+"https://raw.githubusercontent.com/pcm-dpc/COVID-19/master/dati-json/dpc-covid19-ita-andamento-nazionale.json";
+
+let dati = [];
+let visualizzati = [];
+let colonne = [];
+
+async function caricaDati() {
+    try {
+        const risposta = await fetch(URL_JSON);
+        if (!risposta.ok) throw new Error("Errore nel download");
+
+        dati = await risposta.json();
+
+        dati.sort((a,b) =>
+            new Date(a.data) - new Date(b.data)
+        );
+
+        if (dati.length) {
+            colonne = Object.keys(dati[0]);
+            creaIntestazione();
+            filtra();
+        }
+
+    } catch (errore) {
+        document.getElementById("status").textContent =
+            "Errore nel caricamento dei dati. Verificare la connessione Internet.";
+    }
+}
+
+function creaIntestazione() {
+    const tr = document.getElementById("intestazione");
+    tr.innerHTML = "";
+
+    colonne.forEach((colonna, indice) => {
+        const th = document.createElement("th");
+        th.textContent = colonna;
+        th.onclick = () => ordina(colonna);
+        tr.appendChild(th);
+    });
+}
+
+function filtra() {
+    const inizio = document.getElementById("dataInizio").value;
+    const fine = document.getElementById("dataFine").value;
+    const testo = document.getElementById("ricerca")
+        .value.toLowerCase();
+
+    visualizzati = dati.filter(r => {
+        const giorno = r.data.substring(0,10);
+
+        const dataOK =
+            (!inizio || giorno >= inizio) &&
+            (!fine || giorno <= fine);
+
+        const testoOK = colonne.some(c =>
+            String(r[c] ?? "").toLowerCase().includes(testo)
+        );
+
+        return dataOK && testoOK;
+    });
+
+    mostraTabella();
+}
+
+function mostraTabella() {
+    const corpo = document.getElementById("corpo");
+    corpo.innerHTML = "";
+
+    const frammento = document.createDocumentFragment();
+
+    visualizzati.forEach(r => {
+        const tr = document.createElement("tr");
+
+        colonne.forEach(c => {
+            const td = document.createElement("td");
+            let valore = r[c];
+
+            if (c === "data" && valore) {
+                valore = new Date(valore).toLocaleDateString("it-IT", {
+                    timeZone: "UTC"
+                });
+            }
+
+            td.textContent =
+                valore === null || valore === undefined
+                ? "-"
+                : valore;
+
+            tr.appendChild(td);
+        });
+
+        frammento.appendChild(tr);
+    });
+
+    corpo.appendChild(frammento);
+
+    document.getElementById("status").textContent =
+        "Rilevazioni visualizzate: " + visualizzati.length +
+        " su " + dati.length;
+}
+
+function ordina(colonna) {
+    visualizzati.sort((a,b) => {
+        const x = a[colonna];
+        const y = b[colonna];
+
+        if (typeof x === "number" && typeof y === "number")
+            return x - y;
+
+        return String(x ?? "").localeCompare(
+            String(y ?? ""), "it"
+        );
+    });
+
+    mostraTabella();
+}
+
+function filtraEvento() {
+    filtra();
+}
+
+function reset() {
+    document.getElementById("dataInizio").value = "";
+    document.getElementById("dataFine").value = "";
+    document.getElementById("ricerca").value = "";
+    filtra();
+}
+
+function esportaCSV() {
+    const righe = [
+        colonne.join(";"),
+        ...visualizzati.map(r =>
+            colonne.map(c => {
+                let v = r[c] ?? "";
+                return '"' + String(v).replace(/"/g, '""') + '"';
+            }).join(";")
+        )
+    ];
+
+    const blob = new Blob(
+        ["\uFEFF" + righe.join("\n")],
+        {type: "text/csv;charset=utf-8;"}
+    );
+
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "andamento_covid_italia.csv";
+    link.click();
+    URL.revokeObjectURL(link.href);
+}
+
+document.getElementById("ricerca")
+    .addEventListener("input", filtra);
+
+caricaDati();
+</script>
+
+</body>
+</html>
